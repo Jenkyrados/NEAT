@@ -4,3 +4,4 @@ Future ideas :
 - Add other possibilities for weight mutation
 - Make bias optional
 - Implement a way to get maxNodes from maxWeights (most commonly used method)
+- Implement initial weight for connections

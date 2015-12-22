@@ -46,13 +46,13 @@ func GenerateNetwork(g *Genome, c ConstContainer){
   sort.Sort(GeneSlice(g.genes))
   for _,x := range g.genes {
     if x.enabled {
-      if g.network[x.out] == nil{
-         g.network[x.out] = NewNeuron()
+      if g.network[x.to] == nil{
+         g.network[x.to] = NewNeuron()
       }
-      neuron := g.network[x.out]
+      neuron := g.network[x.to]
       neuron.incoming = append(neuron.incoming,x)
-      if g.network[x.into] == nil {
-        g.network[x.into] = NewNeuron()
+      if g.network[x.from] == nil {
+        g.network[x.from] = NewNeuron()
       }
     }
   }
@@ -126,7 +126,7 @@ func evaluateNetwork(g *Genome, c ConstContainer, inputs []float64) []bool{
     sum := 0
     // For now, we have sigmoid transformation neurons
     for _, gene := range neuron.incoming {
-      other := g.network[gene.into]
+      other := g.network[gene.from]
       sum = sum + gene.weight * other.value
     }
     if sum > 0 {
@@ -163,9 +163,34 @@ func linkMutate(g *Genome, forceBias bool, c ConstContainer){
 
   newLink := NewGene()
 
-  newLink.into = neuron1
-  newLink.out = neuron2
+  newLink.from = neuron1
+  newLink.to = neuron2
   if forceBias {
-    newLink.into = c.nbInputs
+    newLink.from = c.nbInputs
   }
+}
+
+func neuronMutate(g *Genome, globalInno *int){
+  if len(g.genes) == 0 {
+    return
+  }
+
+  g.maxneuron++
+  geneDestroyed := g.genes[rand.Intn(len(g.genes))]
+  if !geneDestroyed.enabled {
+    return
+  }
+  *globalInno += 1
+  gene1 := CopyGene(geneDestroyed)
+  gene1.to = genome.maxneuron
+  gene1.weight = 1.0
+  gene1.innovation = *globalInno
+  genome.genes = append(genome.genes,gene1)
+
+  *globalInno += 1
+  gene2 := CopyGene(geneDestroyed)
+  gene2.from = genome.maxneuron
+  genome.genes = append(genome.genes,gene2)
+
+  geneDestroyed.enabled = false
 }

@@ -17,7 +17,7 @@ type Genome struct{
 }
 
 func NewGenome(c ConstContainer) *Genome{
-  return &Genome(make([]Gene,c.maxNodes + c.nbOutputs),0,0,[]Neuron{},0,0,c.mutations)
+  return &Genome(make([]Gene,c.maxNodes + c.nbOutputs),0,0,make([]Neuron),0,0,c.mutations)
 }
 
 func CopyGenome(g *Genome) *Genome{
@@ -142,9 +142,6 @@ func evaluateNetwork(g *Genome, c ConstContainer, inputs []float64) []bool{
   return outputs
 }
 
-func mutate(g *Genome){
-}
-
 func weightMutate(g *Genome, c ConstContainer){
   step := c.mutations["step"]
   pertubation := c.mutations["pertubation"]
@@ -193,4 +190,65 @@ func neuronMutate(g *Genome, globalInno *int){
   genome.genes = append(genome.genes,gene2)
 
   geneDestroyed.enabled = false
+}
+
+func toggleAbleMutate(g *Genome, disable bool){
+  possible := make([]Gene)
+  for _,gene := range g.genes{
+    if gene.enabled == disable {
+      possible = append(possible,gene)
+    }
+  }
+
+  if len(possible) == 0 {
+    return
+  }
+
+  possible[rand.Intn(len(possible))].enabled = !disable
+}
+
+func mutate(g *Genome, c ConstContainer){
+  for mutation, rate := range g.mutationRates{
+    if rand.Intn(2) == 0 {
+      g.mutationRates[mutation] *=0.95
+    } else {
+      g.mutationRates[mutation] *=1.0522
+    }
+  }
+
+  if rand.Float64() < g.mutationRates["mConnection"]{
+    weightMutate(g)
+  }
+
+  proba := g.mutationRates["mLink"]
+  for proba > 0 {
+    if rand.Float64() < proba {
+      linkMutate(g,false,c)
+    }
+    p -= 1
+  }
+
+  proba = g.mutationRates["mBias"]
+  for proba > 0 {
+    if rand.Float64() < proba {
+      linkMutate(g,true,c)
+    }
+    p -= 1
+  }
+
+  proba = g.mutationRates["enable"]
+  for proba > 0 {
+    if rand.Float64() < proba {
+       toggleAbleMutate(g,false)
+    }
+    p -= 1
+  }
+
+  proba = g.mutationRates["disable"]
+  for proba > 0 {
+    if rand.Float64() < proba {
+       toggleAbleMutate(g,true)
+    }
+    p -= 1
+  }
 }

@@ -17,7 +17,7 @@ type ConstContainer struct{
 
 func NewConstContainer(nbInputs, nbOutputs, population int, deltaDis, deltaWei, deltaThres, deltaExc float64,
 stale int, step, pertubation, crossover, mLink, mNode, mBias, mDisable, mEnable, mConnection float64, maxNodes int) *ConstContainer{
-  mutations = make(map[string]float64)
+  mutations := make(map[string]float64)
   mutations["mConnection"] = mConnection
   mutations["pertubation"] = pertubation
   mutations["crossover"] = crossover

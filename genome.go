@@ -115,6 +115,9 @@ func randomNeuron(g *Genome, notInput bool, c ConstContainer) int {
 
 func evaluateNetwork(g *Genome, c ConstContainer, inputs []float64) []bool{
 
+  // Add value for bias
+  inputs = append(inputs,1)
+
   for i := 0; i < c.nbInputs; i++ {
     g.network[i].value = inputs[i]
   }
@@ -151,5 +154,18 @@ func weightMutate(g *Genome, c ConstContainer){
     } else {
       gene.weight = rand.Float64() * 4 - 2
     }
+  }
+}
+
+func linkMutate(g *Genome, forceBias bool, c ConstContainer){
+  neuron1 := randomNeuron(g.genes,true,c)
+  neuron2 := randomNeuron(g.genes,false,c)
+
+  newLink := NewGene()
+
+  newLink.into = neuron1
+  newLink.out = neuron2
+  if forceBias {
+    newLink.into = c.nbInputs
   }
 }

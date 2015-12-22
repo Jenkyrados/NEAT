@@ -2,6 +2,7 @@ package NEAT
 
 // Just a singleton containing all the constants necessary to the network
 type ConstContainer struct{
+  // Note : nbInputs is 1 more than the actual number of inputs, due to the need of a bias
   nbInputs int
   nbOutputs int
   population int

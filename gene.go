@@ -87,6 +87,26 @@ func disjointExcess(g1, g2 []Gene) (disjoint, excess float64){
   return
 }
 
+func weights(g1,g2 []Gene) float64{
+  inno := make(map[int]Gene)
+
+  for _,g := range g1 {
+    inno[g.innovation] = g
+  }
+
+  result := 0.0
+  matches := 0
+
+  for _, g := range g2 {
+    if v,ok := inno[g.innovation]; ok {
+      result += math.Abs(g.weight-v.weight)
+      matches++
+    }
+  }
+
+  return result / float64(matches)
+}
+
 // Implementation to sort a slice of Genes
 // Go has the bad habit of naming a slice type ._. No generecism sucks
 

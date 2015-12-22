@@ -36,18 +36,47 @@ func randomNeuron(g *Genome, notInput bool, c ConstContainer) int {
   return rand.Intn(len(g.network))
 }
 
+// Returns the number of genes who are in one slice, not the other, and have an innovation
+// number inferior to the other's (disjoint)
 
-func disjoint(g1, g2 []Gene) (res int){
-  res = len(g1) + len(g2)
+// Also returnes the number of genes who are in one slice, not the other, and
+// are not disjoint (excess)
+
+// TODO : check if the genes are guaranteed to be always sorted (avoids a test on gene)
+func disjointExcess(g1, g2 []Gene) (disjoint, excess int){
+  disjoint = len(g1) + len(g2)
+  excess = 0
   innos := make(map[int]bool)
+
+  maxinno1 := 0
   for _,g := range g1 {
     innos[g.innovation] = true
-  }
-  for _,g := range g2 {
-    if _,ok := innos[g.innovation]; ok {
-      res--
+    if maxinno1 < g.innovation {
+      maxinno1 = g.innovation
     }
   }
+
+  maxinno2 := 0
+  for _,g := range g2 {
+    if g.innovation > maxinno1 {
+      excess++
+    } else if _,ok := innos[g.innovation]; ok {
+      disjoint -= 2 // Two genes match
+    }
+    if maxinno2 < g.innovation {
+       maxinno2 = g.innovation
+    }
+  }
+
+  if maxinno2 < maxinno1 {
+    for k,_ := range innos {
+      if k > maxinno2 {
+        disjoint-- // this is an excess, not a disjoint
+        excess++
+      }
+    }
+  }
+
   return
 }
 

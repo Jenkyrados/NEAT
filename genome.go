@@ -58,9 +58,6 @@ func GenerateNetwork(g *Genome, c ConstContainer){
   }
 }
 
-func mutate(g *Genome){
-}
-
 func crossover(g1 *Genome, g2 *Genome){
   // g1 has the highest fitness
   if (g2.fitness > g1.fitness){
@@ -122,10 +119,10 @@ func evaluateNetwork(g *Genome, c ConstContainer, inputs []float64) []bool{
     g.network[i].value = inputs[i]
   }
 
-  for _, neuron := range(g.network) {
+  for _, neuron := range g.network  {
     sum := 0
     // For now, we have sigmoid transformation neurons
-    for _, gene := range(neuron.incoming){
+    for _, gene := range neuron.incoming {
       other := g.network[gene.into]
       sum = sum + gene.weight * other.value
     }
@@ -140,4 +137,19 @@ func evaluateNetwork(g *Genome, c ConstContainer, inputs []float64) []bool{
   }
 
   return outputs
+}
+
+func mutate(g *Genome){
+}
+
+func weightMutate(g *Genome, c ConstContainer){
+  step := c.mutations["step"]
+  pertubation := c.mutations["pertubation"]
+  for _,gene := range g.genes {
+    if rand.Float64() < pertubation {
+      gene.weight += rand.Float64()*step*2 - step
+    } else {
+      gene.weight = rand.Float64() * 4 - 2
+    }
+  }
 }

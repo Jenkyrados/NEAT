@@ -3,7 +3,7 @@ package NEAT
 type Species struct{
   topFitness int
   staleness int
-  genomes []Genomes
+  genomes []Genome
   averageFitness int
 }
 

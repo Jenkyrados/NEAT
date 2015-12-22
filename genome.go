@@ -1,6 +1,10 @@
 package NEAT
 
-import "sort"
+import (
+  "sort"
+  "math/rand"
+  "math"
+)
 
 type Genome struct{
   genes []Gene
@@ -103,4 +107,37 @@ func crossover(g1 *Genome, g2 *Genome){
   }
 
   return child
+}
+
+func randomNeuron(g *Genome, notInput bool, c ConstContainer) int {
+  if notInput {
+     return rand.Intn(len(g.network)-c.nbInputs) + c.nbInputs
+  }
+  return rand.Intn(len(g.network))
+}
+
+func evaluateNetwork(g *Genome, c ConstContainer, inputs []float64) []bool{
+
+  for i := 0; i < c.nbInputs; i++ {
+    g.network[i].value = inputs[i]
+  }
+
+  for _, neuron := range(g.network) {
+    sum := 0
+    // For now, we have sigmoid transformation neurons
+    for _, gene := range(neuron.incoming){
+      other := g.network[gene.into]
+      sum = sum + gene.weight * other.value
+    }
+    if sum > 0 {
+      neuron.value = 1/(1 + math.Exp(-sum))
+    }
+  }
+
+  outputs := make([]bool,nbOutputs)
+  for o := 0; o < c.nbOutputs; o++ {
+    outputs[o] = g.network[c.MaxNodes+o].value > 0
+  }
+
+  return outputs
 }

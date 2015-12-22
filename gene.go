@@ -16,6 +16,15 @@ func CopyGene(g *Gene) *Gene{
   return &Gene{g.into,g.out,g.weight,g.enabled,g.innovation}
 }
 
+func containsLink(genes []Gene, link Gene) bool{
+  for _,x := range(genes){
+    if x.into == link.into && x.out == link.out {
+      return true
+    }
+  }
+  return false
+}
+
 // Implementation to sort a slice of Genes
 // Go has the bad habit of naming a slice type ._. No generecism sucks
 

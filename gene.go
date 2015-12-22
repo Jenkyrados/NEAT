@@ -1,6 +1,7 @@
 package NEAT
 
 import (
+  "math"
   "math/rand"
 )
 
@@ -42,10 +43,12 @@ func randomNeuron(g *Genome, notInput bool, c ConstContainer) int {
 // Also returnes the number of genes who are in one slice, not the other, and
 // are not disjoint (excess)
 
+// Both are normalized by the number of genes in the larger genome
+
 // TODO : check if the genes are guaranteed to be always sorted (avoids a test on gene)
-func disjointExcess(g1, g2 []Gene) (disjoint, excess int){
-  disjoint = len(g1) + len(g2)
-  excess = 0
+func disjointExcess(g1, g2 []Gene) (disjoint, excess float64){
+  disjoint = float64(len(g1) + len(g2))
+  excess = 0.0
   innos := make(map[int]bool)
 
   maxinno1 := 0
@@ -76,6 +79,10 @@ func disjointExcess(g1, g2 []Gene) (disjoint, excess int){
       }
     }
   }
+
+  maxGene := math.Max(float64(len(g1)),float64(len(g2)))
+  disjoint /= maxGene
+  excess /= maxGene
 
   return
 }

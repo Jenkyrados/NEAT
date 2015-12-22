@@ -15,3 +15,12 @@ func NewGene() *Gene{
 func CopyGene(g *Gene) *Gene{
   return &Gene{g.into,g.out,g.weight,g.enabled,g.innovation}
 }
+
+// Implementation to sort a slice of Genes
+// Go has the bad habit of naming a slice type ._. No generecism sucks
+
+type GeneSlice []Gene
+
+func (a GeneSlice) Len() int {return len(a)}
+func (a GeneSlice) Swap(i,j int) {a[i],a[j] = a[j],a[i]}
+func (a GeneSlice) Less(i,j int) bool {return a[i].out < a[j].out}

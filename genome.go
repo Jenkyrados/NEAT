@@ -1,5 +1,7 @@
 package NEAT
 
+import "sort"
+
 type Genome struct{
   genes []Gene
   fitness int
@@ -10,8 +12,8 @@ type Genome struct{
   mutationRates map[string]float64
 }
 
-func NewGenome(Mutations map[string]float64) *Genome{
-  return &Genome([]Gene{},0,0,[]Neuron{},0,0,Mutations)
+func NewGenome(c ConstContainer) *Genome{
+  return &Genome(make([]Gene,c.maxNodes + c.nbOutputs),0,0,[]Neuron{},0,0,c.mutations)
 }
 
 func CopyGenome(g *Genome) *Genome{
@@ -30,11 +32,26 @@ func BasicGenome(nbInputs int,mutations map[string]float64) *Genome{
   return res
 }
 
-func GenerateNetwork(g *Genome, constContainer ConstContainer){
-  for i := range constContainer.nbInputs{
-    g.network = append(g.network,NewNeuron())
+func GenerateNetwork(g *Genome, c ConstContainer){
+  for i := range c.nbInputs{
+    g.network[i] = NewNeuron()
   }
-  for i := range constContainer.nbOutputs
+  for i := range c.nbOutputs{
+    g.network[c.maxNodes + i] = NewNeuron()
+  }
+  sort.Sort(GeneSlice(g.genes))
+  for x := range g.genes{
+    if x.enabled {
+      if g.network[x.out] == nil{
+         g.network[x.out] = NewNeuron()
+      }
+      neuron := g.network[x.out]
+      neuron.incoming = append(neuron.incoming,x)
+      if g.network[x.into] == nil {
+        g.network[x.into] = NewNeuron()
+      }
+    }
+  }
 }
 
 func mutate(g *Genome){

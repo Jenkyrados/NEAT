@@ -254,3 +254,9 @@ func mutate(g *Genome, c ConstContainer){
     proba -= 1
   }
 }
+
+func sameSpecies(g1, g2 *Genome, c ConstContainer) bool {
+  disjoint, excess := disjointExcess(g1.genes,g2.genes)
+  weights := weights(g1.genes, g2.genes)
+  return disjoint*c.deltaDisjoint + excess*c.deltaExcess + weights*c.deltaWeight < c.deltaThreshold
+}

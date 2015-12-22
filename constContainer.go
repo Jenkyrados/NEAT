@@ -9,7 +9,7 @@ type ConstContainer struct{
   deltaDisjoint float64
   deltaWeight float64
   deltaThreshold float64
-  deltaExc float64
+  deltaExcess float64
   stale int
   mutations map[string]float64
   maxNodes int

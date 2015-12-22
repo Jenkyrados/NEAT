@@ -1,4 +1,11 @@
-Future ideas : 
+Priority :
+- Get species done to have a working set
+
+Important :
+- Fix pointer / not pointer choices (garbage right now)
+- Fix ConstContainer usage?
+
+Future ideas :
 - Add non-sigmoid transformation neurons
 - Add non-boolean output possibility (float64)
 - Add other possibilities for weight mutation

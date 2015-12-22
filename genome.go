@@ -17,58 +17,67 @@ type Genome struct{
 }
 
 func NewGenome(c ConstContainer) *Genome{
-  return &Genome(make([]Gene,c.maxNodes + c.nbOutputs),0,0,make([]Neuron),0,0,c.mutations)
-}
+  mutationCopy := make(map[string]float64)
+  for k,v := range c.mutations{
+    mutationCopy[k] = v
+  }
+ return &Genome{make([]Gene,c.maxNodes + c.nbOutputs),0,0,make([]Neuron,0),0,0,mutationCopy}
+ }
 
-func CopyGenome(g *Genome) *Genome{
-  res := NewGenome(g.mutationRates)
+func CopyGenome(g *Genome, c ConstContainer) *Genome{
+  res := NewGenome(c)
   for _,x := range g.genes {
-    res.genes = append(res.genes,CopyGene(x))
+    res.genes = append(res.genes,*CopyGene(&x))
   }
   res.maxneuron = g.maxneuron
   return res
 }
 
-func BasicGenome(nbInputs int,mutations map[string]float64) *Genome{
-  res := NewGenome(mutations)
+func BasicGenome(nbInputs int,mutations map[string]float64, c ConstContainer) *Genome{
+  res := NewGenome(c)
   res.maxneuron = nbInputs
-  mutate(res)
+  mutate(res, c)
   return res
 }
 
+// Generates the full neuronic network from genes
 func GenerateNetwork(g *Genome, c ConstContainer){
   for i := 0; i < c.nbInputs; i++{
-    g.network[i] = NewNeuron()
+    g.network[i] = *NewNeuron()
   }
   for i := 0; i < c.nbOutputs; i++{
-    g.network[c.maxNodes + i] = NewNeuron()
+    g.network[c.maxNodes + i] = *NewNeuron()
   }
   sort.Sort(GeneSlice(g.genes))
+
+  seen := make(map[int]bool)
   for _,x := range g.genes {
     if x.enabled {
-      if g.network[x.to] == nil{
-         g.network[x.to] = NewNeuron()
+      if _,ok := seen[x.to]; !ok {
+         g.network[x.to] = *NewNeuron()
       }
+      seen[x.to] = true
       neuron := g.network[x.to]
       neuron.incoming = append(neuron.incoming,x)
-      if g.network[x.from] == nil {
-        g.network[x.from] = NewNeuron()
+      if _,ok := seen[x.from]; !ok {
+        g.network[x.from] = *NewNeuron()
       }
+      seen[x.from] = true
     }
   }
 }
 
-func crossover(g1 *Genome, g2 *Genome){
+func crossover(g1, g2 *Genome, c ConstContainer) *Genome{
   // g1 has the highest fitness
   if (g2.fitness > g1.fitness){
     g2,g1 = g1,g2
   }
 
   // Make a child genome
-  child := NewGenome()
+  child := NewGenome(c)
 
   // Start a record of the innovations. May be put to a slice if i get the time later
-  inno := make(map[int]*Gene)
+  inno := make(map[int]Gene)
   for _,gene := range g2.genes{
     inno[gene.innovation] = gene
   }
@@ -106,13 +115,6 @@ func crossover(g1 *Genome, g2 *Genome){
   return child
 }
 
-func randomNeuron(g *Genome, notInput bool, c ConstContainer) int {
-  if notInput {
-     return rand.Intn(len(g.network)-c.nbInputs) + c.nbInputs
-  }
-  return rand.Intn(len(g.network))
-}
-
 func evaluateNetwork(g *Genome, c ConstContainer, inputs []float64) []bool{
 
   // Add value for bias
@@ -123,7 +125,7 @@ func evaluateNetwork(g *Genome, c ConstContainer, inputs []float64) []bool{
   }
 
   for _, neuron := range g.network  {
-    sum := 0
+    sum := 0.0
     // For now, we have sigmoid transformation neurons
     for _, gene := range neuron.incoming {
       other := g.network[gene.from]
@@ -134,9 +136,9 @@ func evaluateNetwork(g *Genome, c ConstContainer, inputs []float64) []bool{
     }
   }
 
-  outputs := make([]bool,nbOutputs)
+  outputs := make([]bool,c.nbOutputs)
   for o := 0; o < c.nbOutputs; o++ {
-    outputs[o] = g.network[c.MaxNodes+o].value > 0
+    outputs[o] = g.network[c.maxNodes+o].value > 0
   }
 
   return outputs
@@ -155,8 +157,8 @@ func weightMutate(g *Genome, c ConstContainer){
 }
 
 func linkMutate(g *Genome, forceBias bool, c ConstContainer){
-  neuron1 := randomNeuron(g.genes,true,c)
-  neuron2 := randomNeuron(g.genes,false,c)
+  neuron1 := randomNeuron(g,true,c)
+  neuron2 := randomNeuron(g,false,c)
 
   newLink := NewGene()
 
@@ -178,22 +180,22 @@ func neuronMutate(g *Genome, globalInno *int){
     return
   }
   *globalInno += 1
-  gene1 := CopyGene(geneDestroyed)
-  gene1.to = genome.maxneuron
+  gene1 := CopyGene(&geneDestroyed)
+  gene1.to = g.maxneuron
   gene1.weight = 1.0
   gene1.innovation = *globalInno
-  genome.genes = append(genome.genes,gene1)
+  g.genes = append(g.genes,*gene1)
 
   *globalInno += 1
-  gene2 := CopyGene(geneDestroyed)
-  gene2.from = genome.maxneuron
-  genome.genes = append(genome.genes,gene2)
+  gene2 := CopyGene(&geneDestroyed)
+  gene2.from = g.maxneuron
+  g.genes = append(g.genes,*gene2)
 
   geneDestroyed.enabled = false
 }
 
 func toggleAbleMutate(g *Genome, disable bool){
-  possible := make([]Gene)
+  possible := make([]Gene,0)
   for _,gene := range g.genes{
     if gene.enabled == disable {
       possible = append(possible,gene)
@@ -208,7 +210,7 @@ func toggleAbleMutate(g *Genome, disable bool){
 }
 
 func mutate(g *Genome, c ConstContainer){
-  for mutation, rate := range g.mutationRates{
+  for mutation, _ := range g.mutationRates{
     if rand.Intn(2) == 0 {
       g.mutationRates[mutation] *=0.95
     } else {
@@ -217,7 +219,7 @@ func mutate(g *Genome, c ConstContainer){
   }
 
   if rand.Float64() < g.mutationRates["mConnection"]{
-    weightMutate(g)
+    weightMutate(g,c)
   }
 
   proba := g.mutationRates["mLink"]
@@ -225,7 +227,7 @@ func mutate(g *Genome, c ConstContainer){
     if rand.Float64() < proba {
       linkMutate(g,false,c)
     }
-    p -= 1
+    proba -= 1
   }
 
   proba = g.mutationRates["mBias"]
@@ -233,7 +235,7 @@ func mutate(g *Genome, c ConstContainer){
     if rand.Float64() < proba {
       linkMutate(g,true,c)
     }
-    p -= 1
+    proba -= 1
   }
 
   proba = g.mutationRates["enable"]
@@ -241,7 +243,7 @@ func mutate(g *Genome, c ConstContainer){
     if rand.Float64() < proba {
        toggleAbleMutate(g,false)
     }
-    p -= 1
+    proba -= 1
   }
 
   proba = g.mutationRates["disable"]
@@ -249,6 +251,6 @@ func mutate(g *Genome, c ConstContainer){
     if rand.Float64() < proba {
        toggleAbleMutate(g,true)
     }
-    p -= 1
+    proba -= 1
   }
 }
